@@ -6,13 +6,13 @@ import org.springframework.http.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
 
 public class ClientStats {
     private RestTemplate restTemplate;
     private String url = "//stats-service:9090";
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     public void saveStat(StatsDtoRequest stat) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

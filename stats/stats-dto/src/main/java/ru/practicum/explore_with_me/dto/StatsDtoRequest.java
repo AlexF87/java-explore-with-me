@@ -7,7 +7,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -26,5 +26,5 @@ public class StatsDtoRequest {
     private String ip;
 
     @NotNull
-    private LocalDateTime timestamp;
+    private String timestamp;
 }
