@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 import ru.practicum.explore_with_me.dto.StatsDtoRequest;
 import org.springframework.http.*;
@@ -9,15 +10,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public class ClientStats {
-    private RestTemplate restTemplate;
-    private String url = "//stats-service:9090";
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private RestTemplate restTemplate = new RestTemplate();
+    @Value("${stats-service-url}")
+    private String url;
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public void saveStat(StatsDtoRequest stat) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<StatsDtoRequest> requestEntity = new HttpEntity<>(stat, headers);
-        restTemplate = new RestTemplate();
         restTemplate.exchange(url + "/hit", HttpMethod.POST, requestEntity, StatsDtoRequest.class);
     }
 
@@ -39,7 +40,6 @@ public class ClientStats {
                 "uris", urisFull.toString(),
                 "unique", unique);
 
-        restTemplate = new RestTemplate();
         String uri = url + "/stats?start=" + start + "&end=" + end + "&" + uris + "&" + unique;
         return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, Object.class, parameters);
     }

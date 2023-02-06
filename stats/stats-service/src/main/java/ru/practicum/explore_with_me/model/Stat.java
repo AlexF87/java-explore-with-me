@@ -18,8 +18,9 @@ public class Stat {
     @Column(name = "id_stats", nullable = false)
     private long id;
 
-    @Column(nullable = false)
-    private String app;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_app")
+    private App app;
 
     @Column(nullable = false)
     private String uri;
