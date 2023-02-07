@@ -26,8 +26,7 @@ public class StatsController {
     @GetMapping("/stats")
     public List<StatsDtoRes> getStat(@RequestParam("start") LocalDateTime start,
                                      @RequestParam("end") LocalDateTime end,
-                                     @RequestParam(value = "uris", required = false,
-                                             defaultValue = "") List<String> uris,
+                                     @RequestParam(value = "uris", defaultValue = "") List<String> uris,
                                      @RequestParam(value = "unique", defaultValue = "false") boolean unique) {
         log.info("Get stat: start = {}, end = {}, uris = {}, unique = {}", start, end, uris, unique);
         return statsServiceImpl.getStat(start, end, uris, unique);
