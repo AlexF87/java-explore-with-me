@@ -20,4 +20,8 @@ public class Category {
     private Long id;
     @Column(name = "name_cat", nullable = false)
     private String name;
+
+    public Category(String name) {
+        this.name = name;
+    }
 }

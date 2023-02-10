@@ -21,21 +21,21 @@ import java.util.List;
 @RequestMapping(path = "/admin")
 public class AdminController {
 
-    @PostMapping("/categories")
-    public CategoryDtoResponse createCategory(@RequestBody CategoryDtoRequest categoryDtoRequest) {
-        return null;
-    }
-
-    @DeleteMapping("/categories/{catId}")
-    public void deleteCategory(@PathVariable long catId) {
-
-    }
-
-    @PatchMapping("/categories/{catId}")
-    public CategoryDtoResponse updateCategory(@RequestBody CategoryDtoRequest categoryDtoRequest,
-                                              @PathVariable Long catId) {
-        return null;
-    }
+//    @PostMapping("/categories")
+//    public CategoryDtoResponse createCategory(@RequestBody CategoryDtoRequest categoryDtoRequest) {
+//        return null;
+//    }
+//
+//    @DeleteMapping("/categories/{catId}")
+//    public void deleteCategory(@PathVariable long catId) {
+//
+//    }
+//
+//    @PatchMapping("/categories/{catId}")
+//    public CategoryDtoResponse updateCategory(@RequestBody CategoryDtoRequest categoryDtoRequest,
+//                                              @PathVariable Long catId) {
+//        return null;
+//    }
 
     @GetMapping("/events")
     public List<EventDtoResponse> getEvents(@RequestParam(value = "users", required = false) List<Long> userIds,
@@ -54,22 +54,22 @@ public class AdminController {
         return null;
     }
 
-    @GetMapping("/users")
-    public List<UserDto> getUsers(@RequestParam(value = "ids", required = false) List<Long> userIds,
-                           @PositiveOrZero @RequestParam(value = "from", defaultValue = "0") Integer from,
-                           @Positive @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return null;
-    }
-
-    @PostMapping("/users")
-    public UserDto addUser(@Valid @RequestBody NewUserRequest newUserRequest) {
-        return null;
-    }
-
-    @DeleteMapping("/users/{userId}")
-    public void deleteUser(@PathVariable Long userId) {
-
-    }
+//    @GetMapping("/users")
+//    public List<UserDto> getUsers(@RequestParam(value = "ids", required = false) List<Long> userIds,
+//                           @PositiveOrZero @RequestParam(value = "from", defaultValue = "0") Integer from,
+//                           @Positive @RequestParam(value = "size", defaultValue = "10") Integer size) {
+//        return null;
+//    }
+//
+//    @PostMapping("/users")
+//    public UserDto addUser(@Valid @RequestBody NewUserRequest newUserRequest) {
+//        return null;
+//    }
+//
+//    @DeleteMapping("/users/{userId}")
+//    public void deleteUser(@PathVariable Long userId) {
+//
+//    }
 
     @PostMapping("/compilations")
     public CompilationDto addCompilation(@Valid @RequestBody CompilationDtoNew compilationDtoNew) {
