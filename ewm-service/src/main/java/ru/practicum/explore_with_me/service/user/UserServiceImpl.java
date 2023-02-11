@@ -1,6 +1,8 @@
 package ru.practicum.explore_with_me.service.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -9,13 +11,16 @@ import ru.practicum.explore_with_me.dto.user.NewUserRequest;
 import ru.practicum.explore_with_me.dto.user.UserDto;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.UserMapper;
+import ru.practicum.explore_with_me.model.Event;
 import ru.practicum.explore_with_me.model.User;
 import ru.practicum.explore_with_me.repository.UserRepository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +39,6 @@ public class UserServiceImpl implements UserService {
         } else {
             userList = userRepository.findAllByIdIn(ids, pageable);
         }
-
         return userList.stream().map(UserMapper::toUserDto).collect(Collectors.toList());
     }
 

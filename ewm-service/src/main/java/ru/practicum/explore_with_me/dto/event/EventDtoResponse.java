@@ -1,10 +1,15 @@
 package ru.practicum.explore_with_me.dto.event;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
-
+@Getter
+@Setter
+@Builder
 public class EventDtoResponse {
 
     private String annotation;
