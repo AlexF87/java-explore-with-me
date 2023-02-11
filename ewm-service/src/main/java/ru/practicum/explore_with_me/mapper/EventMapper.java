@@ -4,8 +4,14 @@ import org.springframework.stereotype.Component;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.dto.event.EventDtoResponse;
 import ru.practicum.explore_with_me.dto.event.EventShortDto;
+import ru.practicum.explore_with_me.dto.event.EventState;
+import ru.practicum.explore_with_me.dto.event.NewEventDto;
 import ru.practicum.explore_with_me.dto.user.UserShortDto;
+import ru.practicum.explore_with_me.model.Category;
 import ru.practicum.explore_with_me.model.Event;
+import ru.practicum.explore_with_me.model.User;
+
+import java.time.LocalDateTime;
 
 @Component
 public class EventMapper {
@@ -45,5 +51,25 @@ public class EventMapper {
                 .views(event.getViews())
                 .build();
         return eventShortDto;
+    }
+
+    public Event toEvent(NewEventDto newEventDto, User user, Category category) {
+        Event event = new Event();
+        event.setAnnotation(newEventDto.getAnnotation());
+        event.setCategory(category);
+        event.setConfirmedRequests(0L);
+        event.setCreatedOn(LocalDateTime.now());
+        event.setDescription(newEventDto.getDescription());
+        event.setEventDate(newEventDto.getEventDate());
+        event.setInitiator(user);
+        event.setLocation(newEventDto.getLocation());
+        event.setPaid(newEventDto.getPaid());
+        event.setParticipantLimit(event.getParticipantLimit());
+        event.setPublishedOn(null);
+        event.setRequestModeration(newEventDto.getRequestModeration());
+        event.setState(EventState.PENDING);
+        event.setTitle(newEventDto.getTitle());
+        event.setViews(0L);
+        return event;
     }
 }

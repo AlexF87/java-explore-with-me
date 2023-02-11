@@ -53,8 +53,8 @@ public class UserServiceImpl implements UserService {
         checkUser(userId);
         userRepository.deleteById(userId);
     }
-
-    private  User checkUser(Long userId) {
+    @Override
+    public  User checkUser(Long userId) {
         return userRepository.findById(userId).orElseThrow(
                 () ->new NotFoundException(String.format("Not found user, id: %d ", userId)));
     }

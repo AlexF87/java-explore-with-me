@@ -54,7 +54,8 @@ public class CategoryServiceImpl implements CategoryService {
         return allCat.stream().map(CategoryMapper::toCategoryDtoResponse).collect(Collectors.toList());
     }
 
-    private Category checkCategory(Long id) {
+    @Override
+    public Category checkCategory(Long id) {
         return categoryRepository.findById(id).orElseThrow(
                 () -> new NotFoundException(String.format("Not found category, id: %d ", id)));
     }
