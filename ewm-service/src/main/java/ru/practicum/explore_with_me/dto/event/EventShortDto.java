@@ -1,8 +1,12 @@
 package ru.practicum.explore_with_me.dto.event;
 
+import lombok.Builder;
+import lombok.Getter;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.dto.user.UserShortDto;
 
+@Getter
+@Builder
 public class EventShortDto {
     private String annotation;
     private CategoryDtoResponse category;

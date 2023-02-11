@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 
@@ -38,4 +39,18 @@ public class ErrorHandler {
                 .build();
         return apiError;
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleBadRequestException(final BadRequestException e) {
+        log.info("Error 400 {}", e.getMessage());
+        ApiError apiError = ApiError.builder()
+                .message(e.getMessage())
+                .reason("Incorrectly made request.")
+                .status(HttpStatus.BAD_REQUEST.name())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return apiError;
+    }
 }
+
