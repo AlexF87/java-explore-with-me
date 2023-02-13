@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -28,4 +29,10 @@ public class Compilation {
 
     @Column(nullable = false)
     String title;
+
+    public Compilation(Set<Event> events, Boolean pinned, String title) {
+        this.events = events;
+        this.pinned = pinned;
+        this.title = title;
+    }
 }
