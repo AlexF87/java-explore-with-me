@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.mapper;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.dto.event.EventDtoResponse;
@@ -12,6 +13,7 @@ import ru.practicum.explore_with_me.model.Event;
 import ru.practicum.explore_with_me.model.User;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Component
 public class EventMapper {
@@ -19,12 +21,12 @@ public class EventMapper {
         EventDtoResponse eventDtoResponse = EventDtoResponse.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
-                .categoryDtoResponse(new CategoryDtoResponse(event.getCategory().getId(),
+                .category(new CategoryDtoResponse(event.getCategory().getId(),
                         event.getCategory().getName()))
                 .confirmedRequests(event.getConfirmedRequests())
                 .createdOn(event.getCreatedOn())
                 .description(event.getDescription())
-                .eventDate(event.getEventDate())
+                .eventDate(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(event.getEventDate()))
                 .initiator(new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()))
                 .location(event.getLocation())
                 .paid(event.getPaid())
@@ -64,7 +66,7 @@ public class EventMapper {
         event.setInitiator(user);
         event.setLocation(newEventDto.getLocation());
         event.setPaid(newEventDto.getPaid());
-        event.setParticipantLimit(event.getParticipantLimit());
+        event.setParticipantLimit(newEventDto.getParticipantLimit());
         event.setPublishedOn(null);
         event.setRequestModeration(newEventDto.getRequestModeration());
         event.setState(EventState.PENDING);

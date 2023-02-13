@@ -66,7 +66,6 @@ public class Event {
 
     @Column(nullable = false)
     private String title;
-
-    @Transient
+    @Column(nullable = false)
     private Long views;
 }

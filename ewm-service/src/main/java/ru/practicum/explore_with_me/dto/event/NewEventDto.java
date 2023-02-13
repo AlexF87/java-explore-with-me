@@ -1,40 +1,41 @@
 package ru.practicum.explore_with_me.dto.event;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+
 @ToString
 @Setter
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class NewEventDto {
     @NotBlank
     private String annotation;
     @NotNull
-    Long category;
+    private Long category;
     @NotBlank
     @Size(min = 20, max = 7000)
-    String description;
+    private String description;
     @NotNull
-    LocalDateTime eventDate;
+    //@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;
 
     @NotNull
-    Location location;
+    private Location location;
 
-    Boolean paid;
+    private Boolean paid;
 
-    Integer participantLimit;
+    private Integer participantLimit;
 
-    Boolean requestModeration;
+    private Boolean requestModeration;
 
     @NotBlank
     @Size(min = 3, max = 120)
-    String title;
+    private String title;
 
 }

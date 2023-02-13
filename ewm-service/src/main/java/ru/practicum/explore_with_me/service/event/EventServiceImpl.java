@@ -11,12 +11,14 @@ import ru.practicum.explore_with_me.dto.event.*;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
+import ru.practicum.explore_with_me.dto.request.RequestState;
 import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.EventMapper;
 import ru.practicum.explore_with_me.model.Category;
 import ru.practicum.explore_with_me.model.Event;
+import ru.practicum.explore_with_me.model.Request;
 import ru.practicum.explore_with_me.model.User;
 import ru.practicum.explore_with_me.repository.EventRepository;
 import ru.practicum.explore_with_me.service.category.CategoryService;
@@ -47,7 +49,7 @@ public class EventServiceImpl implements EventService {
     public List<EventDtoResponse> getEventsAdmin(List<Long> usersId, List<EventState> states, List<Long> categoriesId,
                                                  LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
                                                  Integer size) {
-        Pageable pageable = CustomPageRequest.of(from, size, Sort.by("id").ascending());
+        Pageable pageable = CustomPageRequest.of(from, size, Sort.by("createdOn").descending());
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<Event> critQuery = builder.createQuery(Event.class);
 
@@ -55,7 +57,9 @@ public class EventServiceImpl implements EventService {
         critQuery.select(root);
         List<Predicate> predicates = new ArrayList<>();
         if (usersId != null && !usersId.isEmpty()) {
-            Expression<Long> exp = root.get("id");
+            Root<User> rootUser = critQuery.from(User.class);
+            Expression<Long> exp = (rootUser.get("id"));
+
             Predicate inUserId = exp.in(usersId);
             predicates.add(inUserId);
         }
@@ -222,8 +226,40 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
-        return null;
+    public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequest eventRequest) {
+        User user = userService.checkUser(userId);
+        Event event = checkEvent(eventId);
+        EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
+        if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
+            return result;
+        }
+        if (event.getParticipantLimit() <= event.getConfirmedRequests()) {
+            throw new ForbiddenException("The limit on applications for this event has been reached");
+        }
+        List<ParticipationRequestDto> requests = requestService.findRequestForUpdate(eventRequest.getRequestIds());
+        for (ParticipationRequestDto request : requests) {
+            if (request.getStatus() != RequestState.PENDING) {
+                throw new ForbiddenException("the request is not in a PENDING state");
+            }
+            if(checkParticipantLimit(event) && eventRequest.getStatus() == RequestState.CONFIRMED ) {
+                long confirmed = event.getConfirmedRequests();
+                event.setConfirmedRequests(++confirmed);
+                request.setStatus(RequestState.CONFIRMED);
+                result.getConfirmedRequests().add(request);
+
+            } else {
+                request.setStatus(RequestState.REJECTED);
+                result.getRejectedRequests().add(request);
+            }
+
+        }
+        return result;
+    }
+
+    private boolean checkParticipantLimit(Event event) {
+        long x = event.getParticipantLimit() - event.getConfirmedRequests();
+        return x > 0 ? true : false;
     }
 
     private Event checkEvent(Long id) {

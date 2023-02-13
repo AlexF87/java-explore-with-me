@@ -13,13 +13,13 @@ import java.time.LocalDateTime;
 public class EventDtoResponse {
 
     private String annotation;
-    private CategoryDtoResponse categoryDtoResponse;
+    private CategoryDtoResponse category;
     private Long confirmedRequests;
     //Дата и время создания события
     private LocalDateTime createdOn;
     private String description;
     //Дата и время на которые намечено событие
-    private LocalDateTime eventDate;
+    private String eventDate;
     private Long id;
     private UserShortDto initiator;
     private Location location;
