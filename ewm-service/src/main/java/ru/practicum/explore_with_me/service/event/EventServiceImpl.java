@@ -29,9 +29,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,36 +49,33 @@ public class EventServiceImpl implements EventService {
                                                  Integer size) {
         Pageable pageable = CustomPageRequest.of(from, size, Sort.by("createdOn").descending());
         CriteriaBuilder builder = em.getCriteriaBuilder();
-        CriteriaQuery<Event> critQuery = builder.createQuery(Event.class);
+        CriteriaQuery<Event> cq = builder.createQuery(Event.class);
 
-        Root<Event> root = critQuery.from(Event.class);
-        critQuery.select(root);
+        Root<Event> root = cq.from(Event.class);
+        cq.select(root);
         List<Predicate> predicates = new ArrayList<>();
         if (usersId != null && !usersId.isEmpty()) {
-            Root<User> rootUser = critQuery.from(User.class);
-            Expression<Long> exp = (rootUser.get("id"));
-
-            Predicate inUserId = exp.in(usersId);
+            Path<String> userPath = root.get("initiator");
+            Predicate inUserId = userPath.in(usersId);
             predicates.add(inUserId);
         }
         if (states != null && !states.isEmpty()) {
-            Expression<EventState> st = root.get("state");
-            Predicate inState = st.in(states);
+            Path<String> statePath = root.get("state");
+            Predicate inState = statePath.in(states);
             predicates.add(inState);
         }
         if (categoriesId != null && !categoriesId.isEmpty()) {
-            Root<Category> root2 = critQuery.from(Category.class);
-            Expression<Long> cat = root2.get("id");
-            Predicate inCat = cat.in(categoriesId);
+            Path<String> catPath = root.get("category");
+            Predicate inCat = catPath.in(categoriesId);
             predicates.add(inCat);
         }
         if (rangeStart != null && rangeEnd != null) {
             Predicate date = builder.between(root.get("eventDate"), rangeStart, rangeEnd);
             predicates.add(date);
         }
-        critQuery.select(root);
-        critQuery.where(builder.and(predicates.toArray(new Predicate[0])));
-        TypedQuery<Event> query = em.createQuery(critQuery);
+        cq.select(root);
+        cq.where(builder.and(predicates.toArray(new Predicate[0])));
+        TypedQuery<Event> query = em.createQuery(cq);
         Page<Event> page = new PageImpl<Event>(query.getResultList(), pageable, size);
         List<EventDtoResponse> result = page.stream().map(EventMapper::toEventResponse).collect(Collectors.toList());
         return result;
@@ -108,13 +103,14 @@ public class EventServiceImpl implements EventService {
             sortEvent = Sort.by("views").ascending();
         }
         Pageable pageable = CustomPageRequest.of(from, size, sortEvent);
-        CriteriaBuilder builder = em.getCriteriaBuilder();
-        CriteriaQuery<Event> critQuery = builder.createQuery(Event.class);
+       /* CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<Event> cq = builder.createQuery(Event.class);
 
-        Root<Event> root = critQuery.from(Event.class);
-        critQuery.select(root);
+        Root<Event> root = cq.from(Event.class);
+        cq.select(root);
         List<Predicate> predicates = new ArrayList<>();
         if (text != null) {
+            Path<String> pathAnnot = root.get("annotation");
             Expression<String> path = root.get("annotation");
             Expression<String> pathLower = builder.lower(path);
             Expression<String> pathDes = root.get("description");
@@ -125,14 +121,13 @@ public class EventServiceImpl implements EventService {
             predicates.add(likeTextDes);
         }
         if (categories != null && !categories.isEmpty()) {
-            Root<Category> root2 = critQuery.from(Category.class);
-            Expression<Long> cat = root2.get("id");
-            Predicate inCat = cat.in(categories);
+            Path<Long> pathCat = root.get("category");
+            Predicate inCat = pathCat.in(categories);
             predicates.add(inCat);
         }
         if (paid != null) {
-            Expression<Boolean> param = root.get("paid");
-            Predicate paidFilter = builder.equal(param, paid);
+            Path<Boolean> pathPaid = root.get("paid");
+            Predicate paidFilter = pathPaid.in(paid);
             predicates.add(paidFilter);
         }
         if (rangeStart != null && rangeEnd != null) {
@@ -151,10 +146,12 @@ public class EventServiceImpl implements EventService {
         }
         Predicate stateFilter = builder.equal(root.get("state"), EventState.PUBLISHED);
         predicates.add(stateFilter);
-        critQuery.select(root).where(builder.and(predicates.toArray(new Predicate[0])));
-        TypedQuery<Event> query = em.createQuery(critQuery);
-        Page<Event> page = new PageImpl<Event>(query.getResultList(), pageable, size);
-        return page.stream().map(EventMapper::toEvenShortDto).collect(Collectors.toList());
+        cq.select(root).where(builder.and(predicates.toArray(new Predicate[0])));
+        TypedQuery<Event> query = em.createQuery(cq);
+        Page<Event> page = new PageImpl<Event>(query.getResultList(), pageable, size);*/
+        Page<Event> list = eventRepository.findByParams(text.toLowerCase(), categories, paid, rangeStart, rangeEnd,
+                onlyAvailable, pageable);
+        return list.stream().map(EventMapper::toEvenShortDto).collect(Collectors.toList());
     }
 
     @Override
@@ -171,7 +168,7 @@ public class EventServiceImpl implements EventService {
         userService.checkUser(userId);
         List<Event> result = new ArrayList<>();
         Pageable pageable = CustomPageRequest.of(from, size, Sort.by("id").ascending());
-        result = eventRepository.findAllByInitiator(userId, pageable);
+        result = eventRepository.findAllEventInitiatorWithPagination(userId, pageable);
         return result.stream().map(EventMapper::toEvenShortDto).collect(Collectors.toList());
     }
 
@@ -187,7 +184,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDtoResponse findUserEvent(Long userId, Long eventId) {
         userService.checkUser(userId);
-        Event event = eventRepository.findByInitiatorAndId(userId, eventId);
+        Event event = eventRepository.findByInitiatorIdAndId(userId, eventId);
         if (event == null) {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
         }
@@ -198,11 +195,14 @@ public class EventServiceImpl implements EventService {
     public EventDtoResponse updateEventUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         User user = userService.checkUser(userId);
         Event event = checkEvent(eventId);
-        Category category = categoryService.checkCategory(updateEventUserRequest.getCategory());
+        Category category = null;
+        if (updateEventUserRequest.getCategory() != null) {
+            category = categoryService.checkCategory(updateEventUserRequest.getCategory());
+        }
         if (!Objects.equals(user.getId(), event.getInitiator().getId())) {
             throw new ForbiddenException("User is not initiator");
         }
-        if (event.getState() != EventState.CANCELED || event.getState() != EventState.PENDING) {
+        if (event.getState().equals(EventState.PUBLISHED.toString())) {
             throw new ForbiddenException("Only pending or canceled events can be changed");
         }
         LocalDateTime now = LocalDateTime.now();
@@ -242,7 +242,7 @@ public class EventServiceImpl implements EventService {
             if (request.getStatus() != RequestState.PENDING) {
                 throw new ForbiddenException("the request is not in a PENDING state");
             }
-            if(checkParticipantLimit(event) && eventRequest.getStatus() == RequestState.CONFIRMED ) {
+            if (checkParticipantLimit(event) && eventRequest.getStatus() == RequestState.CONFIRMED) {
                 long confirmed = event.getConfirmedRequests();
                 event.setConfirmedRequests(++confirmed);
                 request.setStatus(RequestState.CONFIRMED);
@@ -344,7 +344,9 @@ public class EventServiceImpl implements EventService {
         if (updateEvent.getAnnotation() != null) {
             event.setAnnotation(updateEvent.getAnnotation());
         }
-        event.setCategory(category);
+        if (category != null) {
+            event.setCategory(category);
+        }
         if (updateEvent.getDescription() != null) {
             event.setDescription(updateEvent.getDescription());
         }

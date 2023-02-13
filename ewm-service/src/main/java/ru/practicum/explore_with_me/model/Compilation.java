@@ -18,10 +18,14 @@ import java.util.Set;
 public class Compilation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_compilations")
     private Long id;
 
     @ManyToMany
-    @JoinColumn(name = "id_comp")
+    @JoinTable(
+            name = "events_compilations",
+            joinColumns = @JoinColumn(name = "id_comp"),
+            inverseJoinColumns = @JoinColumn(name = "id_event"))
     Set<Event> events;
 
     @Column(nullable = false)

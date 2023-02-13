@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.common.CustomPageRequest;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoRequest;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
+import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.model.Category;
 import ru.practicum.explore_with_me.repository.CategoryRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDtoResponse addCategory(CategoryDtoRequest categoryDtoRequest) {
+        checkCategoryNameUnique(categoryDtoRequest.getName());
         Category newCat = categoryMapper.toCategory(categoryDtoRequest);
         return CategoryMapper.toCategoryDtoResponse(categoryRepository.save(newCat));
     }
@@ -37,6 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDtoResponse updateCategory(Long id, CategoryDtoRequest categoryDtoRequest) {
         Category oldCategory = checkCategory(id);
+        checkCategoryNameUnique(categoryDtoRequest.getName());
         oldCategory.setName(categoryDtoRequest.getName());
         return CategoryMapper.toCategoryDtoResponse(categoryRepository.save(oldCategory));
     }
@@ -59,4 +63,14 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findById(id).orElseThrow(
                 () -> new NotFoundException(String.format("Not found category, id: %d ", id)));
     }
+
+    private void checkCategoryNameUnique(String name) {
+        Category uniqueName = categoryRepository.findByName(name);
+        if (uniqueName != null) {
+            throw new ForbiddenException("could not execute statement; SQL [n/a]; constraint [uq_category_name];" +
+                    " nested exception is org.hibernate.exception.ConstraintViolationException: " +
+                    "could not execute statement");
+        }
+    }
 }
+

@@ -28,9 +28,11 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
 
+    private final int NANO = 0;
+
     @Override
     public List<ParticipationRequestDto> findRequestEvent(Long eventId) {
-        List<Request> result = requestRepository.findAllByEvent(eventId);
+        List<Request> result = requestRepository.findAllByEventId(eventId);
 
         return result.stream().map(RequestMapper::toParticipationRequestDto).collect(Collectors.toList());
     }
@@ -44,7 +46,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<ParticipationRequestDto> getRequestsByUserId(Long userId) {
         userService.checkUser(userId);
-        List<Request> result = requestRepository.findAllByRequesterOrderByIdAsc(userId);
+        List<Request> result = requestRepository.findAllByRequesterIdOrderByIdAsc(userId);
         return result.stream().map(RequestMapper::toParticipationRequestDto).collect(Collectors.toList());
     }
 
@@ -56,7 +58,7 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
         }
         checkRepeatRequest(eventId, userId);
-        if (userId != event.get().getInitiator().getId()) {
+        if (userId == event.get().getInitiator().getId()) {
             throw new ForbiddenException("The initiator adds the request to its event.");
         }
         if (event.get().getState() != EventState.PUBLISHED) {
@@ -76,7 +78,7 @@ public class RequestServiceImpl implements RequestService {
             newRequest.setStatus(RequestState.PENDING);
         }
         newRequest.setRequester(user);
-        newRequest.setCreated(LocalDateTime.now());
+        newRequest.setCreated(LocalDateTime.now().withNano(NANO));
         newRequest.setEvent(event.get());
 
         return RequestMapper.toParticipationRequestDto(requestRepository.save(newRequest));
@@ -95,13 +97,15 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private void checkRepeatRequest(Long event, Long userId) {
-        Optional<Request> request = requestRepository.findByEventAndRequester(event, userId);
-        request.orElseThrow(()-> new ForbiddenException(
-                String.format("You cannot add a repeat request, eventId %d, userId", event, userId)));
+        List<Request> request = requestRepository.findByEventAndRequester(event, userId);
+        if (request.size() > 0) {
+            throw new ForbiddenException(
+            String.format("You cannot add a repeat request, eventId %d, userId", event, userId));
+        }
     }
 
-    private Request checkRequest (Long requestId, Long userId) {
-        Optional<Request> request = requestRepository.findByIdAndRequester(requestId, userId);
+    private Request checkRequest(Long requestId, Long userId) {
+        Optional<Request> request = requestRepository.findByIdAndRequesterId(requestId, userId);
         request.orElseThrow(() -> new NotFoundException(String.format("Request with id=%d was not found", requestId)));
         return request.get();
     }

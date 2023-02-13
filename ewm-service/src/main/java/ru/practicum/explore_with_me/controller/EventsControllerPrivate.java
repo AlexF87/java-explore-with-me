@@ -79,7 +79,7 @@ public class EventsControllerPrivate {
                                                                @Valid @RequestBody EventRequestStatusUpdateRequest
                                                                eventRequestStatusUpdateRequest) {
 
-        log.info("PATCH /users/{userId}/events//{eventId}/requests userId {}, eventId {}, dto {}", userId, eventId,
+        log.info("PATCH /users/{userId}/events//{eventId}/requests userId {}, eventId {}, {}", userId, eventId,
                 eventRequestStatusUpdateRequest);
 
         return eventService.updateRequestStatus(userId, eventId, eventRequestStatusUpdateRequest);

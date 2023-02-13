@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,7 +27,18 @@ public class ErrorHandler {
                 .build();
         return apiError;
     }
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handle(final ConstraintViolationException e) {
+        ApiError apiError = ApiError.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.name())
+                .message(e.getMessage())
+                .reason("Integrity constraint has been violated.")
+                .build();
 
+        return apiError;
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleForbiddenException(final ForbiddenException e) {
