@@ -9,7 +9,7 @@ import ru.practicum.explore_with_me.dto.event.EventDtoResponse;
 import ru.practicum.explore_with_me.dto.event.EventShortDto;
 import ru.practicum.explore_with_me.service.event.EventService;
 
-import javax.validation.constraints.Positive;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,29 +23,30 @@ public class EventsControllerPub {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<EventShortDto> findAllEvents(@RequestParam(required = false) String text,
-                                         @RequestParam(required = false) List<Long> categories,
-                                         @RequestParam(required = false) Boolean paid,
-                                         @RequestParam(required = false) LocalDateTime rangeStart,
-                                         @RequestParam(required = false) LocalDateTime rangeEnd,
-                                         @RequestParam(required = false) Boolean onlyAvailable,
-                                         @RequestParam(required = false) String sort,
-                                         @RequestParam(defaultValue = "0") Integer from,
-                                         @RequestParam(defaultValue = "10") Integer size) {
+    public List<EventShortDto> findAllEvents(HttpServletRequest request,
+                                             @RequestParam(required = false) String text,
+                                             @RequestParam(required = false) List<Long> categories,
+                                             @RequestParam(required = false) Boolean paid,
+                                             @RequestParam(required = false) LocalDateTime rangeStart,
+                                             @RequestParam(required = false) LocalDateTime rangeEnd,
+                                             @RequestParam(required = false) Boolean onlyAvailable,
+                                             @RequestParam(required = false) String sort,
+                                             @RequestParam(defaultValue = "0") Integer from,
+                                             @RequestParam(defaultValue = "10") Integer size) {
 
         log.info("GET /events text:{},\ncategories:{},paid:{},rangeStart:{},rangeEnd:{},\n" +
                         "onlyAvailable:{},sort:{},from:{}, size:{}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
         return eventService.findAllEvents(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size);
+                onlyAvailable, sort, from, size, request);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public EventDtoResponse getEvent(@PathVariable Long id) {
+    public EventDtoResponse getEvent(HttpServletRequest request, @PathVariable Long id) {
         log.info("GET /events/ id {}", id);
 
-        return eventService.getEvent(id);
+        return eventService.getEvent(id, request);
     }
 }

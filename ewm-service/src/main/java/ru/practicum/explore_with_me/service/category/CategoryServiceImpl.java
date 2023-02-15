@@ -14,7 +14,6 @@ import ru.practicum.explore_with_me.model.Category;
 import ru.practicum.explore_with_me.repository.CategoryRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor

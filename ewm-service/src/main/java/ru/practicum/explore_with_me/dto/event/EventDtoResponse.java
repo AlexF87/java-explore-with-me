@@ -7,6 +7,7 @@ import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder

@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -26,13 +25,13 @@ public class Compilation {
             name = "events_compilations",
             joinColumns = @JoinColumn(name = "id_comp"),
             inverseJoinColumns = @JoinColumn(name = "id_event"))
-    Set<Event> events;
+    private Set<Event> events;
 
     @Column(nullable = false)
-    Boolean pinned = false;
+    private Boolean pinned = false;
 
     @Column(nullable = false)
-    String title;
+    private String title;
 
     public Compilation(Set<Event> events, Boolean pinned, String title) {
         this.events = events;

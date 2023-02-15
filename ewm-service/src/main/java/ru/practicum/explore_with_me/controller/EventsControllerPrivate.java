@@ -77,7 +77,7 @@ public class EventsControllerPrivate {
     public EventRequestStatusUpdateResult updateRequestsStatus(@Positive @PathVariable Long userId,
                                                                @Positive @PathVariable Long eventId,
                                                                @Valid @RequestBody EventRequestStatusUpdateRequest
-                                                               eventRequestStatusUpdateRequest) {
+                                                                       eventRequestStatusUpdateRequest) {
 
         log.info("PATCH /users/{userId}/events//{eventId}/requests userId {}, eventId {}, {}", userId, eventId,
                 eventRequestStatusUpdateRequest);

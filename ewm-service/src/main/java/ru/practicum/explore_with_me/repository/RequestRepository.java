@@ -8,10 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
-    List<Request>findAllByEventId(Long eventId);
-    List<Request>findByIdInOrderByIdAsc(List<Long> requestId);
+    List<Request> findAllByEventId(Long eventId);
 
-    List<Request>findAllByRequesterIdOrderByIdAsc(Long id);
+    List<Request> findByIdInOrderByIdAsc(List<Long> requestId);
+
+    List<Request> findAllByRequesterIdOrderByIdAsc(Long id);
 
     Optional<Request> findByIdAndRequesterId(Long requestId, Long userId);
 

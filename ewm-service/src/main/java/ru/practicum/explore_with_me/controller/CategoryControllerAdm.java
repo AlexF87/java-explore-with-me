@@ -29,7 +29,7 @@ public class CategoryControllerAdm {
 
     @DeleteMapping("/{catId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCategory(@Positive  @PathVariable Long catId) {
+    public void deleteCategory(@Positive @PathVariable Long catId) {
         log.info("DELETE/admin/categories/ catId={}", catId);
         categoryService.deleteCategory(catId);
     }
@@ -37,7 +37,7 @@ public class CategoryControllerAdm {
     @PatchMapping("/{catId}")
     @ResponseStatus(HttpStatus.OK)
     public CategoryDtoResponse updateCategory(@Positive @PathVariable Long catId,
-                                      @Valid @RequestBody CategoryDtoRequest categoryDtoRequest) {
+                                              @Valid @RequestBody CategoryDtoRequest categoryDtoRequest) {
         log.info("PATCH /admin/categories/ catId={}, dto={}", catId, categoryDtoRequest);
         return categoryService.updateCategory(catId, categoryDtoRequest);
     }

@@ -5,6 +5,7 @@ import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,9 +18,9 @@ public interface EventService {
 
     List<EventShortDto> findAllEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
                                       LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Integer from,
-                                      Integer size);
+                                      Integer size, HttpServletRequest request);
 
-    EventDtoResponse getEvent(Long id);
+    EventDtoResponse getEvent(Long id, HttpServletRequest request);
 
     List<EventShortDto> getEventsForPrivate(Long userId, Integer from, Integer size);
 

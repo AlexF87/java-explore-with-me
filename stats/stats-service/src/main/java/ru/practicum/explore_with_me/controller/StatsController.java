@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.dto.StatsDtoRequest;
 import ru.practicum.explore_with_me.dto.StatsDtoRes;
@@ -18,14 +19,16 @@ public class StatsController {
     private final StatsService statsServiceImpl;
 
     @PostMapping("/hit")
+    @ResponseStatus(HttpStatus.CREATED)
     public void add(@Valid @RequestBody StatsDtoRequest statsDto) {
         log.info("POST /hit dto={},", statsDto);
         statsServiceImpl.add(statsDto);
     }
 
     @GetMapping("/stats")
-    public List<StatsDtoRes> getStat(@RequestParam("start") LocalDateTime start,
-                                     @RequestParam("end") LocalDateTime end,
+    @ResponseStatus(HttpStatus.OK)
+    public List<StatsDtoRes> getStat(@RequestParam ("start")  LocalDateTime start,
+                                     @RequestParam("end")  LocalDateTime end,
                                      @RequestParam(value = "uris", defaultValue = "") List<String> uris,
                                      @RequestParam(value = "unique", defaultValue = "false") boolean unique) {
         log.info("Get stat: start = {}, end = {}, uris = {}, unique = {}", start, end, uris, unique);

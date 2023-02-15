@@ -23,17 +23,17 @@ public class Request {
     private Long id;
 
     @Column(nullable = false)
-    LocalDateTime created;
+    private LocalDateTime created;
 
     @ManyToOne
     @JoinColumn(name = "id_event")
-    Event event;
+    private Event event;
 
     @ManyToOne
     @JoinColumn(name = "id_user")
-    User requester;
+    private User requester;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    RequestState status;
+    private RequestState status;
 }

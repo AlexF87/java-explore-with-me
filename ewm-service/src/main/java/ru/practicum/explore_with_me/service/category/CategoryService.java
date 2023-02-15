@@ -15,7 +15,7 @@ public interface CategoryService {
 
     CategoryDtoResponse findById(Long id);
 
-    List<CategoryDtoResponse>findAll(Integer from, Integer size);
+    List<CategoryDtoResponse> findAll(Integer from, Integer size);
 
     Category checkCategory(Long id);
 }

@@ -27,8 +27,7 @@ public class RequestServiceImpl implements RequestService {
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
-
-    private final int NANO = 0;
+    private static final int WITH_NANO_ZERO = 0;
 
     @Override
     public List<ParticipationRequestDto> findRequestEvent(Long eventId) {
@@ -78,7 +77,7 @@ public class RequestServiceImpl implements RequestService {
             newRequest.setStatus(RequestState.PENDING);
         }
         newRequest.setRequester(user);
-        newRequest.setCreated(LocalDateTime.now().withNano(NANO));
+        newRequest.setCreated(LocalDateTime.now().withNano(WITH_NANO_ZERO));
         newRequest.setEvent(event.get());
 
         return RequestMapper.toParticipationRequestDto(requestRepository.save(newRequest));
@@ -100,7 +99,7 @@ public class RequestServiceImpl implements RequestService {
         List<Request> request = requestRepository.findByEventAndRequester(event, userId);
         if (request.size() > 0) {
             throw new ForbiddenException(
-            String.format("You cannot add a repeat request, eventId %d, userId", event, userId));
+                    String.format("You cannot add a repeat request, eventId %d, userId", event, userId));
         }
     }
 

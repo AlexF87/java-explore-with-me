@@ -1,12 +1,18 @@
 package ru.practicum.explore_with_me.service.event;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.explore_with_me.client.ClientStats;
 import ru.practicum.explore_with_me.common.CustomPageRequest;
+import ru.practicum.explore_with_me.dto.StatsDtoRequest;
+import ru.practicum.explore_with_me.dto.StatsDtoRes;
 import ru.practicum.explore_with_me.dto.event.*;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
@@ -15,10 +21,10 @@ import ru.practicum.explore_with_me.dto.request.RequestState;
 import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
+import ru.practicum.explore_with_me.handler.exception.StatsException;
 import ru.practicum.explore_with_me.mapper.EventMapper;
 import ru.practicum.explore_with_me.model.Category;
 import ru.practicum.explore_with_me.model.Event;
-import ru.practicum.explore_with_me.model.Request;
 import ru.practicum.explore_with_me.model.User;
 import ru.practicum.explore_with_me.repository.EventRepository;
 import ru.practicum.explore_with_me.service.category.CategoryService;
@@ -28,10 +34,12 @@ import ru.practicum.explore_with_me.service.user.UserService;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
@@ -42,6 +50,7 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
     private final EntityManager em;
+    private final ClientStats clientStats;
 
     @Override
     public List<EventDtoResponse> getEventsAdmin(List<Long> usersId, List<EventState> states, List<Long> categoriesId,
@@ -77,6 +86,7 @@ public class EventServiceImpl implements EventService {
         cq.where(builder.and(predicates.toArray(new Predicate[0])));
         TypedQuery<Event> query = em.createQuery(cq);
         Page<Event> page = new PageImpl<Event>(query.getResultList(), pageable, size);
+        writeViews(page.getContent());
         List<EventDtoResponse> result = page.stream().map(EventMapper::toEventResponse).collect(Collectors.toList());
         return result;
     }
@@ -88,6 +98,7 @@ public class EventServiceImpl implements EventService {
         checkDate(event, updateEventAdminRequest);
         event = updateEventAdm(event, updateEventAdminRequest);
         event = eventRepository.save(event);
+        writeViews(List.of(event));
         return EventMapper.toEventResponse(event);
     }
 
@@ -95,71 +106,34 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> findAllEvents(String text, List<Long> categories, Boolean paid,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Boolean onlyAvailable, String sort, Integer from,
-                                             Integer size) {
+                                             Integer size, HttpServletRequest request) {
         Sort sortEvent = Sort.by("id").ascending();
         if (sort != null && sort.equals("EVENT_DATE")) {
             sortEvent = Sort.by("eventDate").ascending();
         } else if (sort != null && sort.equals("VIEWS")) {
             sortEvent = Sort.by("views").ascending();
         }
+        updateStat(request);
         Pageable pageable = CustomPageRequest.of(from, size, sortEvent);
-       /* CriteriaBuilder builder = em.getCriteriaBuilder();
-        CriteriaQuery<Event> cq = builder.createQuery(Event.class);
-
-        Root<Event> root = cq.from(Event.class);
-        cq.select(root);
-        List<Predicate> predicates = new ArrayList<>();
+        String lowerText = null;
         if (text != null) {
-            Path<String> pathAnnot = root.get("annotation");
-            Expression<String> path = root.get("annotation");
-            Expression<String> pathLower = builder.lower(path);
-            Expression<String> pathDes = root.get("description");
-            Expression<String> pathLowerDes = builder.lower(pathDes);
-            Predicate likeText = builder.like(pathLower, "%" + text.toLowerCase() + "%");
-            Predicate likeTextDes = builder.like(pathLowerDes, "%" + text.toLowerCase() + "%");
-            predicates.add(likeText);
-            predicates.add(likeTextDes);
+            lowerText = text.toLowerCase();
         }
-        if (categories != null && !categories.isEmpty()) {
-            Path<Long> pathCat = root.get("category");
-            Predicate inCat = pathCat.in(categories);
-            predicates.add(inCat);
-        }
-        if (paid != null) {
-            Path<Boolean> pathPaid = root.get("paid");
-            Predicate paidFilter = pathPaid.in(paid);
-            predicates.add(paidFilter);
-        }
-        if (rangeStart != null && rangeEnd != null) {
-            Predicate date = builder.between(root.get("eventDate"), rangeStart, rangeEnd);
-            predicates.add(date);
-        } else {
-            LocalDateTime now = LocalDateTime.now();
-            Predicate date = builder.greaterThan(root.get("eventDate"), now);
-            predicates.add(date);
-        }
-        if (onlyAvailable != null) {
-            Expression<Long> param = root.get("confirmedRequests");
-            Expression<Long> param2 = root.get("participantLimit");
-            Predicate limitFilter = builder.greaterThan(param2, param);
-            predicates.add(limitFilter);
-        }
-        Predicate stateFilter = builder.equal(root.get("state"), EventState.PUBLISHED);
-        predicates.add(stateFilter);
-        cq.select(root).where(builder.and(predicates.toArray(new Predicate[0])));
-        TypedQuery<Event> query = em.createQuery(cq);
-        Page<Event> page = new PageImpl<Event>(query.getResultList(), pageable, size);*/
-        Page<Event> list = eventRepository.findByParams(text.toLowerCase(), categories, paid, rangeStart, rangeEnd,
+        Page<Event> list = eventRepository.findByParams(lowerText, categories, paid, rangeStart, rangeEnd,
                 onlyAvailable, pageable);
+        writeViews(list.getContent());
         return list.stream().map(EventMapper::toEvenShortDto).collect(Collectors.toList());
     }
 
     @Override
-    public EventDtoResponse getEvent(Long id) {
+    @Transactional
+    public EventDtoResponse getEvent(Long id, HttpServletRequest request) {
+        updateStat(request);
         Event event = checkEvent(id);
         if (event.getState() != EventState.PUBLISHED) {
             throw new BadRequestException("Event must be published");
         }
+        writeViews(List.of(event));
         return EventMapper.toEventResponse(event);
     }
 
@@ -169,6 +143,7 @@ public class EventServiceImpl implements EventService {
         List<Event> result = new ArrayList<>();
         Pageable pageable = CustomPageRequest.of(from, size, Sort.by("id").ascending());
         result = eventRepository.findAllEventInitiatorWithPagination(userId, pageable);
+        writeViews(result);
         return result.stream().map(EventMapper::toEvenShortDto).collect(Collectors.toList());
     }
 
@@ -188,6 +163,7 @@ public class EventServiceImpl implements EventService {
         if (event == null) {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
         }
+        writeViews(List.of(event));
         return EventMapper.toEventResponse(event);
     }
 
@@ -202,7 +178,7 @@ public class EventServiceImpl implements EventService {
         if (!Objects.equals(user.getId(), event.getInitiator().getId())) {
             throw new ForbiddenException("User is not initiator");
         }
-        if (event.getState().equals(EventState.PUBLISHED.toString())) {
+        if (event.getState().equals(EventState.PUBLISHED)) {
             throw new ForbiddenException("Only pending or canceled events can be changed");
         }
         LocalDateTime now = LocalDateTime.now();
@@ -213,6 +189,7 @@ public class EventServiceImpl implements EventService {
             }
         }
         event = updateEventUser(event, updateEventUserRequest, category);
+        writeViews(List.of(event));
         return EventMapper.toEventResponse(eventRepository.save(event));
     }
 
@@ -226,6 +203,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest eventRequest) {
         User user = userService.checkUser(userId);
@@ -278,6 +256,10 @@ public class EventServiceImpl implements EventService {
                 throw new ForbiddenException("Event not PUBLISHED");
             }
         }
+        if (event.getState().equals(EventState.CANCELED)
+                && updateEvent.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+            throw new ForbiddenException("Publishing a canceled event");
+        }
     }
 
     private void checkDate(Event event, UpdateEventAdminRequest updateEvent) {
@@ -286,6 +268,9 @@ public class EventServiceImpl implements EventService {
                 throw new ForbiddenException("Wrong date. The start date of the event should not be earlier than " +
                         "an hour from the date of publication.");
             }
+        }
+        if (updateEvent.getEventDate() != null && updateEvent.getEventDate().isBefore(LocalDateTime.now())) {
+            throw new ForbiddenException("The event does not meet the editing rules");
         }
     }
 
@@ -314,7 +299,8 @@ public class EventServiceImpl implements EventService {
         if (updateEvent.getRequestModeration() != null) {
             event.setRequestModeration(updateEvent.getRequestModeration());
         }
-        if (StateAction.CANCEL_REVIEW.equals(updateEvent.getStateAction())) {
+        if (StateAction.CANCEL_REVIEW.equals(updateEvent.getStateAction()) ||
+                StateAction.REJECT_EVENT.equals(updateEvent.getStateAction())) {
             event.setState(EventState.CANCELED);
         }
         if (StateAction.SEND_TO_REVIEW.equals(updateEvent.getStateAction())) {
@@ -379,5 +365,49 @@ public class EventServiceImpl implements EventService {
             event.setTitle(updateEvent.getTitle());
         }
         return event;
+    }
+
+    private void updateStat(HttpServletRequest request) {
+        try {
+            StatsDtoRequest statsDtoRequest = new StatsDtoRequest();
+            statsDtoRequest.setApp("ewm-service");
+            statsDtoRequest.setIp(request.getRemoteAddr());
+            statsDtoRequest.setUri(request.getRequestURI());
+            statsDtoRequest.setTimestamp(LocalDateTime.now());
+            clientStats.saveStat(statsDtoRequest);
+            log.info("Sending statistics was successful");
+        } catch (StatsException e) {
+            log.error("Sending statistics failed");
+        }
+    }
+
+    private void writeViews(List<Event> events) {
+        List<String> uris = new ArrayList<>();
+        events.forEach((e) ->
+                uris.add("/events/" + e.getId())
+        );
+        ResponseEntity<List<StatsDtoRes>> response;
+        List<StatsDtoRes> stats = new ArrayList<>();
+        try {
+            response = clientStats.getStats(LocalDateTime.of(2000, 1, 1,
+                    0, 0), LocalDateTime.now(), uris, false);
+
+            stats = response.getBody();
+        } catch (StatsException e) {
+            log.error("client-stat: " + e.getMessage());
+        }
+        if (stats != null && !stats.isEmpty()) {
+            for (Event e : events) {
+                for (StatsDtoRes dto : stats) {
+                    String[] words = dto.getUri().split("/");
+                    if (Integer.parseInt(words[2]) == e.getId()) {
+                        e.setViews(dto.getHits());
+                    }
+                }
+            }
+        } else {
+            events.forEach(e -> e.setViews(0L));
+        }
+
     }
 }

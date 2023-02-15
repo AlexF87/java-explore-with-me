@@ -11,7 +11,7 @@ public class CategoryMapper {
         return new Category(categoryDtoRequest.getName());
     }
 
-    public static CategoryDtoResponse toCategoryDtoResponse (Category category) {
+    public static CategoryDtoResponse toCategoryDtoResponse(Category category) {
         CategoryDtoResponse categoryDtoResponse = CategoryDtoResponse.builder()
                 .id(category.getId())
                 .name(category.getName())

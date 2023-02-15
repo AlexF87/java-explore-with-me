@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
+import ru.practicum.explore_with_me.handler.exception.StatsException;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +28,7 @@ public class ErrorHandler {
                 .build();
         return apiError;
     }
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handle(final ConstraintViolationException e) {
@@ -36,9 +38,9 @@ public class ErrorHandler {
                 .message(e.getMessage())
                 .reason("Integrity constraint has been violated.")
                 .build();
-
         return apiError;
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleForbiddenException(final ForbiddenException e) {
@@ -46,6 +48,19 @@ public class ErrorHandler {
         ApiError apiError = ApiError.builder()
                 .message(e.getMessage())
                 .reason("For the requested operation the conditions are not met.")
+                .status(HttpStatus.CONFLICT.name())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return apiError;
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleStatsException(final StatsException e) {
+        log.info("Error 409 {}", e.getMessage());
+        ApiError apiError = ApiError.builder()
+                .message(e.getMessage())
+                .reason("Sending statistics failed.")
                 .status(HttpStatus.CONFLICT.name())
                 .timestamp(LocalDateTime.now())
                 .build();

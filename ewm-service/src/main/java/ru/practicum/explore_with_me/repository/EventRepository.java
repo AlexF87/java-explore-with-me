@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-    List<Event> findAllByInitiatorId(Long id, Pageable pageable);
 
     Event findByInitiatorIdAndId(Long userId, Long eventId);
 
@@ -21,8 +20,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("select e " +
             "from Event e " +
             "where " +
-            "(:text is null OR ((lower(e.annotation) LIKE :text OR lower(e.description) LIKE :text))) "+
-            "AND (:cat is null OR e.category.id IN :cat) "+
+            "(:text is null OR ((lower(e.annotation) LIKE :text OR lower(e.description) LIKE :text))) " +
+            "AND (:cat is null OR e.category.id IN :cat) " +
             "AND (:paid is null OR e.paid = :paid) " +
             "AND (e.eventDate BETWEEN :start AND :end) " +
             "AND (:onlyAvailable is null OR e.participantLimit > e.confirmedRequests)")
