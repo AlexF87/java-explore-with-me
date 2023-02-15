@@ -57,7 +57,7 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
         }
         checkRepeatRequest(eventId, userId);
-        if (userId == event.get().getInitiator().getId()) {
+        if (userId.equals(event.get().getInitiator().getId())) {
             throw new ForbiddenException("The initiator adds the request to its event.");
         }
         if (event.get().getState() != EventState.PUBLISHED) {
