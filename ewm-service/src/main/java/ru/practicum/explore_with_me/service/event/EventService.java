@@ -4,6 +4,7 @@ import ru.practicum.explore_with_me.dto.event.*;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
+import ru.practicum.explore_with_me.model.Event;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -34,4 +35,6 @@ public interface EventService {
 
     EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
                                                        EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest);
+
+    Event checkEvent(Long id);
 }
