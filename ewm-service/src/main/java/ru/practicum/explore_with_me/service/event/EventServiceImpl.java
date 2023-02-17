@@ -51,7 +51,7 @@ public class EventServiceImpl implements EventService {
     private final EntityManager em;
     private final ClientStats clientStats;
     @Value("${name-app}")
-    private String NAME_APP;
+    private String nameApp;
 
     @Override
     public List<EventDtoResponse> getEventsAdmin(List<Long> usersId, List<EventState> states, List<Long> categoriesId,
@@ -375,7 +375,7 @@ public class EventServiceImpl implements EventService {
     private void updateStat(HttpServletRequest request) {
         try {
             StatsDtoRequest statsDtoRequest = new StatsDtoRequest();
-            statsDtoRequest.setApp(NAME_APP);
+            statsDtoRequest.setApp(nameApp);
             statsDtoRequest.setIp(request.getRemoteAddr());
             statsDtoRequest.setUri(request.getRequestURI());
             statsDtoRequest.setTimestamp(LocalDateTime.now());

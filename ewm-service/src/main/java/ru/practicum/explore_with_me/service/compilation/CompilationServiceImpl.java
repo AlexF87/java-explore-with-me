@@ -9,7 +9,6 @@ import ru.practicum.explore_with_me.common.CustomPageRequest;
 import ru.practicum.explore_with_me.dto.compilation.CompilationDto;
 import ru.practicum.explore_with_me.dto.compilation.CompilationDtoNew;
 import ru.practicum.explore_with_me.dto.compilation.UpdateCompilationRequest;
-import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.model.Compilation;
@@ -35,7 +34,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Transactional
     public CompilationDto addCompilation(CompilationDtoNew compilationDtoNew) {
         List<Event> events = new ArrayList<>();
-        if(compilationDtoNew.getEvents() != null || !compilationDtoNew.getEvents().isEmpty()) {
+        if (compilationDtoNew.getEvents() != null || !compilationDtoNew.getEvents().isEmpty()) {
             events = eventRepository.findAllById(compilationDtoNew.getEvents());
         }
         Set<Event> eventSet = new HashSet<>(events);

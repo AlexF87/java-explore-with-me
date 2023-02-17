@@ -18,7 +18,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findAllEventInitiatorWithPagination(Long id, Pageable pageable);
 
     @Query("select e " +
-            "from Event e "+
+            "from Event e " +
             "where " +
             "(:text is null OR ((lower(e.annotation) LIKE :text OR lower(e.description) LIKE :text))) " +
             "AND (:cat is null OR e.category.id IN :cat) " +

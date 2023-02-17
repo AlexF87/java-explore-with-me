@@ -18,5 +18,6 @@ public interface RequestService {
     ParticipationRequestDto cancelRequestById(Long userId, Long requestId);
 
     List<RequestShort> getRequestShort(List<Long> idEvents);
+
     void updateRequest(long idRequest, RequestState status);
 }

@@ -22,9 +22,6 @@ import java.util.Map;
 public class ClientStats {
     @Value("${stats-service-url}")
     private String statsServer;
-    private String API_PREFIX_HIT = "hit";
-
-    private String API_PREFIX_STATS = statsServer + "stats";
 
     private final RestTemplate restTemplate;
 
@@ -34,7 +31,6 @@ public class ClientStats {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<StatsDtoRequest> requestEntity = new HttpEntity<>(stat, headers);
-        log.info(String.format("%S", API_PREFIX_HIT));
         restTemplate.exchange(statsServer + "hit", HttpMethod.POST, requestEntity, StatsDtoRequest
                 .class);
     }

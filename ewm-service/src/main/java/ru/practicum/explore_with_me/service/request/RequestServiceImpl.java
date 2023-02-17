@@ -99,14 +99,14 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestShort> getRequestShort(List<Long> idEvents) {
-       return requestRepository.getRequestConfirmed(idEvents);
+        return requestRepository.getRequestConfirmed(idEvents);
     }
 
     @Override
     @Transactional
     public void updateRequest(long idRequest, RequestState status) {
         Optional<Request> request = requestRepository.findById(idRequest);
-        if(request.isPresent()) {
+        if (request.isPresent()) {
             request.get().setStatus(status);
             requestRepository.save(request.get());
         }
