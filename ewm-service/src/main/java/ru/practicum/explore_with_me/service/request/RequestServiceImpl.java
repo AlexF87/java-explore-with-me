@@ -2,10 +2,12 @@ package ru.practicum.explore_with_me.service.request;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.dto.event.EventState;
 import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
+import ru.practicum.explore_with_me.dto.request.RequestShort;
 import ru.practicum.explore_with_me.dto.request.RequestState;
-import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
+import ru.practicum.explore_with_me.handler.exception.ForbiddenExceptionCust;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.RequestMapper;
 import ru.practicum.explore_with_me.model.Event;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
     private final UserService userService;
@@ -32,7 +35,6 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<ParticipationRequestDto> findRequestEvent(Long eventId) {
         List<Request> result = requestRepository.findAllByEventId(eventId);
-
         return result.stream().map(RequestMapper::toParticipationRequestDto).collect(Collectors.toList());
     }
 
@@ -50,28 +52,28 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto addRequest(Long userId, Long eventId) {
         User user = userService.checkUser(userId);
         Optional<Event> event = eventRepository.findById(eventId);
+        event.get().setConfirmedRequests(getConfirmedRequest(eventId));
         if (event.isEmpty()) {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
         }
         checkRepeatRequest(eventId, userId);
         if (userId.equals(event.get().getInitiator().getId())) {
-            throw new ForbiddenException("The initiator adds the request to its event.");
+            throw new ForbiddenExceptionCust("The initiator adds the request to its event.");
         }
         if (event.get().getState() != EventState.PUBLISHED) {
-            throw new ForbiddenException("Event not published");
+            throw new ForbiddenExceptionCust("Event not published");
         }
         long limitRequest = event.get().getParticipantLimit() - event.get().getConfirmedRequests();
         if (limitRequest == 0) {
-            throw new ForbiddenException("The limit of participation requests has been reached");
+            throw new ForbiddenExceptionCust("The limit of participation requests has been reached");
         }
         Request newRequest = new Request();
         if (!event.get().getRequestModeration()) {
             newRequest.setStatus(RequestState.CONFIRMED);
-            long confReq = event.get().getConfirmedRequests();
-            event.get().setConfirmedRequests(++confReq);
             eventRepository.save(event.get());
         } else {
             newRequest.setStatus(RequestState.PENDING);
@@ -84,21 +86,44 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto cancelRequestById(Long userId, Long requestId) {
         userService.checkUser(userId);
         Request request = checkRequest(requestId, userId);
         Event event = request.getEvent();
-        event.setConfirmedRequests(event.getConfirmedRequests() - 1);
         eventRepository.save(event);
         request.setStatus(RequestState.CANCELED);
         request = requestRepository.save(request);
         return RequestMapper.toParticipationRequestDto(request);
     }
 
+    @Override
+    public List<RequestShort> getRequestShort(List<Long> idEvents) {
+       return requestRepository.getRequestConfirmed(idEvents);
+    }
+
+    @Override
+    @Transactional
+    public void updateRequest(long idRequest, RequestState status) {
+        Optional<Request> request = requestRepository.findById(idRequest);
+        if(request.isPresent()) {
+            request.get().setStatus(status);
+            requestRepository.save(request.get());
+        }
+    }
+
+    private long getConfirmedRequest(Long idEvent) {
+        RequestShort requestShort = requestRepository.getRequestConfirmedOnlyOneEvent(idEvent);
+        if (requestShort != null) {
+            return requestShort.getConfirmedRequests();
+        }
+        return 0L;
+    }
+
     private void checkRepeatRequest(Long event, Long userId) {
         List<Request> request = requestRepository.findByEventAndRequester(event, userId);
         if (request.size() > 0) {
-            throw new ForbiddenException(
+            throw new ForbiddenExceptionCust(
                     String.format("You cannot add a repeat request, eventId %d, userId", event, userId));
         }
     }

@@ -11,7 +11,6 @@ import ru.practicum.explore_with_me.service.request.RequestService;
 import java.util.List;
 
 @Slf4j
-@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/{userId}/requests")

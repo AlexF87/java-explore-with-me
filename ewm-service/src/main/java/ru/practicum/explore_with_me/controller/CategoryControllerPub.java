@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
 import ru.practicum.explore_with_me.service.category.CategoryService;
@@ -12,6 +13,7 @@ import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/categories")

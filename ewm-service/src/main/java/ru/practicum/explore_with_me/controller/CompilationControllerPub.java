@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.dto.compilation.CompilationDto;
 import ru.practicum.explore_with_me.service.compilation.CompilationService;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Slf4j
@@ -21,9 +23,9 @@ public class CompilationControllerPub {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CompilationDto> getCompilations(@RequestParam(required = false, defaultValue = "false") Boolean pinned,
-                                                @RequestParam(defaultValue = "0") Integer from,
-                                                @RequestParam(defaultValue = "10") Integer size) {
+    public List<CompilationDto> getCompilations(@RequestParam(defaultValue = "false") Boolean pinned,
+                                                @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("GET /compilations pinned {}, from {}, size {}", pinned, from, size);
         return compilationService.getCompilations(pinned, from, size);
     }

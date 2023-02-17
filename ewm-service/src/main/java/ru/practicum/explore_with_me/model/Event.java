@@ -1,9 +1,11 @@
 package ru.practicum.explore_with_me.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.explore_with_me.dto.event.EventState;
 import ru.practicum.explore_with_me.dto.event.Location;
 
@@ -29,7 +31,7 @@ public class Event {
     @JoinColumn(name = "id_cat", nullable = false)
     private Category category;
 
-    @Column(name = "confirmed_requests", nullable = false)
+    @Transient
     private Long confirmedRequests;
 
     @Column(name = "created_on", nullable = false)
@@ -66,7 +68,7 @@ public class Event {
 
     @Column(nullable = false)
     private String title;
-    @Column(nullable = false)
+
     @Transient
     private Long views;
 }

@@ -10,6 +10,8 @@ import ru.practicum.explore_with_me.dto.event.EventShortDto;
 import ru.practicum.explore_with_me.service.event.EventService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,8 +33,8 @@ public class EventsControllerPub {
                                              @RequestParam(required = false) LocalDateTime rangeEnd,
                                              @RequestParam(required = false) Boolean onlyAvailable,
                                              @RequestParam(required = false) String sort,
-                                             @RequestParam(defaultValue = "0") Integer from,
-                                             @RequestParam(defaultValue = "10") Integer size) {
+                                             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                             @RequestParam(defaultValue = "10") @Positive Integer size) {
 
         log.info("GET /events text:{},\ncategories:{},paid:{},rangeStart:{},rangeEnd:{},\n" +
                         "onlyAvailable:{},sort:{},from:{}, size:{}",

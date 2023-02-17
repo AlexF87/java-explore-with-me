@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.service.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +15,9 @@ import ru.practicum.explore_with_me.common.CustomPageRequest;
 import ru.practicum.explore_with_me.dto.StatsDtoRequest;
 import ru.practicum.explore_with_me.dto.StatsDtoRes;
 import ru.practicum.explore_with_me.dto.event.*;
-import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
-import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
-import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
-import ru.practicum.explore_with_me.dto.request.RequestState;
+import ru.practicum.explore_with_me.dto.request.*;
 import ru.practicum.explore_with_me.handler.exception.BadRequestException;
-import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
+import ru.practicum.explore_with_me.handler.exception.ForbiddenExceptionCust;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.handler.exception.StatsException;
 import ru.practicum.explore_with_me.mapper.EventMapper;
@@ -41,6 +39,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
 
@@ -51,6 +50,8 @@ public class EventServiceImpl implements EventService {
     private final EventMapper eventMapper;
     private final EntityManager em;
     private final ClientStats clientStats;
+    @Value("${name-app}")
+    private String NAME_APP;
 
     @Override
     public List<EventDtoResponse> getEventsAdmin(List<Long> usersId, List<EventState> states, List<Long> categoriesId,
@@ -92,6 +93,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventDtoResponse updateEventAdmin(Long id, UpdateEventAdminRequest updateEventAdminRequest) {
         Event event = checkEvent(id);
         checkActionState(event, updateEventAdminRequest);
@@ -103,6 +105,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public List<EventShortDto> findAllEvents(String text, List<Long> categories, Boolean paid,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Boolean onlyAvailable, String sort, Integer from,
@@ -148,6 +151,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventDtoResponse addEvent(Long userId, NewEventDto newEventDto) {
         User user = userService.checkUser(userId);
         Category category = categoryService.checkCategory(newEventDto.getCategory());
@@ -168,6 +172,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventDtoResponse updateEventUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         User user = userService.checkUser(userId);
         Event event = checkEvent(eventId);
@@ -176,16 +181,16 @@ public class EventServiceImpl implements EventService {
             category = categoryService.checkCategory(updateEventUserRequest.getCategory());
         }
         if (!Objects.equals(user.getId(), event.getInitiator().getId())) {
-            throw new ForbiddenException("User is not initiator");
+            throw new ForbiddenExceptionCust("User is not initiator");
         }
         if (event.getState().equals(EventState.PUBLISHED)) {
-            throw new ForbiddenException("Only pending or canceled events can be changed");
+            throw new ForbiddenExceptionCust("Only pending or canceled events can be changed");
         }
         LocalDateTime now = LocalDateTime.now();
         if (updateEventUserRequest.getEventDate() != null) {
             now.plusHours(2);
             if (updateEventUserRequest.getEventDate().isBefore(now)) {
-                throw new ForbiddenException("event cannot be earlier than two hours from the current moment");
+                throw new ForbiddenExceptionCust("event cannot be earlier than two hours from the current moment");
             }
         }
         event = updateEventUser(event, updateEventUserRequest, category);
@@ -208,24 +213,24 @@ public class EventServiceImpl implements EventService {
                                                               EventRequestStatusUpdateRequest eventRequest) {
         User user = userService.checkUser(userId);
         Event event = checkEvent(eventId);
+        writeConfirmedRequests(List.of(event));
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             return result;
         }
         if (event.getParticipantLimit() <= event.getConfirmedRequests()) {
-            throw new ForbiddenException("The limit on applications for this event has been reached");
+            throw new ForbiddenExceptionCust("The limit on applications for this event has been reached");
         }
         List<ParticipationRequestDto> requests = requestService.findRequestForUpdate(eventRequest.getRequestIds());
         for (ParticipationRequestDto request : requests) {
             if (request.getStatus() != RequestState.PENDING) {
-                throw new ForbiddenException("the request is not in a PENDING state");
+                throw new ForbiddenExceptionCust("the request is not in a PENDING state");
             }
             if (checkParticipantLimit(event) && eventRequest.getStatus() == RequestState.CONFIRMED) {
-                long confirmed = event.getConfirmedRequests();
-                event.setConfirmedRequests(++confirmed);
                 request.setStatus(RequestState.CONFIRMED);
                 result.getConfirmedRequests().add(request);
-
+                requestService.updateRequest(request.getId(), RequestState.CONFIRMED);
+                writeConfirmedRequests(List.of(event));
             } else {
                 request.setStatus(RequestState.REJECTED);
                 result.getRejectedRequests().add(request);
@@ -248,40 +253,40 @@ public class EventServiceImpl implements EventService {
     private void checkActionState(Event event, UpdateEventAdminRequest updateEvent) {
         if (updateEvent.getStateAction() == StateAction.PUBLISH_EVENT) {
             if (event.getState() != EventState.PENDING) {
-                throw new ForbiddenException("Cannot publish the event because it's not in the right state: PUBLISHED");
+                throw new ForbiddenExceptionCust("Cannot publish the event because it's not in the right state: PUBLISHED");
             }
         }
         if (updateEvent.getStateAction() == StateAction.REJECT_EVENT) {
             if (event.getState() == EventState.PUBLISHED) {
-                throw new ForbiddenException("Event not PUBLISHED");
+                throw new ForbiddenExceptionCust("Event not PUBLISHED");
             }
         }
         if (event.getState().equals(EventState.CANCELED)
                 && updateEvent.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
-            throw new ForbiddenException("Publishing a canceled event");
+            throw new ForbiddenExceptionCust("Publishing a canceled event");
         }
     }
 
     private void checkDate(Event event, UpdateEventAdminRequest updateEvent) {
         if (updateEvent.getEventDate() != null && event.getPublishedOn() != null) {
             if (updateEvent.getEventDate().isBefore(event.getPublishedOn().plusMinutes(60))) {
-                throw new ForbiddenException("Wrong date. The start date of the event should not be earlier than " +
+                throw new ForbiddenExceptionCust("Wrong date. The start date of the event should not be earlier than " +
                         "an hour from the date of publication.");
             }
         }
         if (updateEvent.getEventDate() != null && updateEvent.getEventDate().isBefore(LocalDateTime.now())) {
-            throw new ForbiddenException("The event does not meet the editing rules");
+            throw new ForbiddenExceptionCust("The event does not meet the editing rules");
         }
     }
 
     private Event updateEventAdm(Event event, UpdateEventAdminRequest updateEvent) {
-        if (updateEvent.getAnnotation() != null) {
+        if (updateEvent.getAnnotation() != null && !updateEvent.getAnnotation().isBlank()) {
             event.setAnnotation(updateEvent.getAnnotation());
         }
         if (updateEvent.getCategory() != null) {
             event.getCategory().setId(updateEvent.getCategory());
         }
-        if (updateEvent.getDescription() != null) {
+        if (updateEvent.getDescription() != null && !updateEvent.getDescription().isBlank()) {
             event.setDescription(updateEvent.getDescription());
         }
         if (updateEvent.getEventDate() != null) {
@@ -310,7 +315,7 @@ public class EventServiceImpl implements EventService {
             event.setState(EventState.PUBLISHED);
             event.setPublishedOn(LocalDateTime.now());
         }
-        if (updateEvent.getTitle() != null) {
+        if (updateEvent.getTitle() != null && !updateEvent.getTitle().isBlank()) {
             event.setTitle(updateEvent.getTitle());
         }
         return event;
@@ -320,20 +325,20 @@ public class EventServiceImpl implements EventService {
         LocalDateTime now = LocalDateTime.now();
         now.plusHours(2);
         if (!newEventDto.getEventDate().isAfter(now)) {
-            throw new ForbiddenException(String.format("Field: eventDate. Error: должно содержать дату, которая еще не " +
+            throw new ForbiddenExceptionCust(String.format("Field: eventDate. Error: должно содержать дату, которая еще не " +
                     "наступила.Value: %s", newEventDto.getEventDate().toString()));
         }
 
     }
 
     private Event updateEventUser(Event event, UpdateEventUserRequest updateEvent, Category category) {
-        if (updateEvent.getAnnotation() != null) {
+        if (updateEvent.getAnnotation() != null && !updateEvent.getAnnotation().isBlank()) {
             event.setAnnotation(updateEvent.getAnnotation());
         }
         if (category != null) {
             event.setCategory(category);
         }
-        if (updateEvent.getDescription() != null) {
+        if (updateEvent.getDescription() != null && !updateEvent.getDescription().isBlank()) {
             event.setDescription(updateEvent.getDescription());
         }
         if (updateEvent.getEventDate() != null) {
@@ -361,7 +366,7 @@ public class EventServiceImpl implements EventService {
             event.setState(EventState.PUBLISHED);
             event.setPublishedOn(LocalDateTime.now());
         }
-        if (updateEvent.getTitle() != null) {
+        if (updateEvent.getTitle() != null && !updateEvent.getTitle().isBlank()) {
             event.setTitle(updateEvent.getTitle());
         }
         return event;
@@ -370,7 +375,7 @@ public class EventServiceImpl implements EventService {
     private void updateStat(HttpServletRequest request) {
         try {
             StatsDtoRequest statsDtoRequest = new StatsDtoRequest();
-            statsDtoRequest.setApp("ewm-service");
+            statsDtoRequest.setApp(NAME_APP);
             statsDtoRequest.setIp(request.getRemoteAddr());
             statsDtoRequest.setUri(request.getRequestURI());
             statsDtoRequest.setTimestamp(LocalDateTime.now());
@@ -382,6 +387,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void writeViews(List<Event> events) {
+        writeConfirmedRequests(events);
         List<String> uris = new ArrayList<>();
         events.forEach((e) ->
                 uris.add("/events/" + e.getId())
@@ -394,7 +400,7 @@ public class EventServiceImpl implements EventService {
 
             stats = response.getBody();
         } catch (StatsException e) {
-            log.error("client-stat: " + e.getMessage());
+            log.error(String.format("client-stat: %s", e.getMessage()));
         }
         if (stats != null && !stats.isEmpty()) {
             for (Event e : events) {
@@ -408,6 +414,31 @@ public class EventServiceImpl implements EventService {
         } else {
             events.forEach(e -> e.setViews(0L));
         }
+    }
 
+    private void writeConfirmedRequests(List<Event> events) {
+        if (events != null && !events.isEmpty()) {
+            List<Long> eventId = new ArrayList<>();
+            events.forEach(
+                    e -> {
+                        eventId.add(e.getId());
+                    }
+            );
+            List<RequestShort> result = requestService.getRequestShort(eventId);
+            if (result != null && !result.isEmpty()) {
+                for (RequestShort requestShort : result) {
+                    for (Event event : events) {
+                        if (requestShort.getId() == event.getId()) {
+                            event.setConfirmedRequests(requestShort.getConfirmedRequests());
+                        }
+                    }
+                }
+            }
+            events.forEach(e -> {
+                        if (e.getConfirmedRequests() == null)
+                            e.setConfirmedRequests(0L);
+                    }
+            );
+        }
     }
 }

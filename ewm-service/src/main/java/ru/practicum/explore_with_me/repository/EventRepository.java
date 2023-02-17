@@ -18,13 +18,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findAllEventInitiatorWithPagination(Long id, Pageable pageable);
 
     @Query("select e " +
-            "from Event e " +
+            "from Event e "+
             "where " +
             "(:text is null OR ((lower(e.annotation) LIKE :text OR lower(e.description) LIKE :text))) " +
             "AND (:cat is null OR e.category.id IN :cat) " +
             "AND (:paid is null OR e.paid = :paid) " +
             "AND (e.eventDate BETWEEN :start AND :end) " +
-            "AND (:onlyAvailable is null OR e.participantLimit > e.confirmedRequests)")
+            "AND (:onlyAvailable is null OR e.participantLimit > (select count(r) from" +
+            " Request  r where  e.id = r.event.id AND r.status = 'CONFIRMED') )")
     Page<Event> findByParams(@Param("text") String text, @Param("cat") List<Long> cat,
                              @Param("paid") Boolean paid, @Param("start") LocalDateTime rangeStart,
                              @Param("end") LocalDateTime rangeEnd, @Param("onlyAvailable") Boolean onlyAvailable,

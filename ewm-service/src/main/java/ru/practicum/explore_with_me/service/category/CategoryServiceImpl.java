@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.common.CustomPageRequest;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoRequest;
 import ru.practicum.explore_with_me.dto.category.CategoryDtoResponse;
-import ru.practicum.explore_with_me.handler.exception.ForbiddenException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.model.Category;
@@ -18,30 +18,32 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Transactional
     public CategoryDtoResponse addCategory(CategoryDtoRequest categoryDtoRequest) {
-        checkCategoryNameUnique(categoryDtoRequest.getName());
         Category newCat = categoryMapper.toCategory(categoryDtoRequest);
         return CategoryMapper.toCategoryDtoResponse(categoryRepository.save(newCat));
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         checkCategory(id);
         categoryRepository.deleteById(id);
     }
 
     @Override
+    @Transactional
     public CategoryDtoResponse updateCategory(Long id, CategoryDtoRequest categoryDtoRequest) {
         Category oldCategory = checkCategory(id);
-        checkCategoryNameUnique(categoryDtoRequest.getName());
         oldCategory.setName(categoryDtoRequest.getName());
-        return CategoryMapper.toCategoryDtoResponse(categoryRepository.save(oldCategory));
+        return CategoryMapper.toCategoryDtoResponse(oldCategory);
     }
 
     @Override
@@ -61,15 +63,6 @@ public class CategoryServiceImpl implements CategoryService {
     public Category checkCategory(Long id) {
         return categoryRepository.findById(id).orElseThrow(
                 () -> new NotFoundException(String.format("Not found category, id: %d ", id)));
-    }
-
-    private void checkCategoryNameUnique(String name) {
-        Category uniqueName = categoryRepository.findByName(name);
-        if (uniqueName != null) {
-            throw new ForbiddenException("could not execute statement; SQL [n/a]; constraint [uq_category_name];" +
-                    " nested exception is org.hibernate.exception.ConstraintViolationException: " +
-                    "could not execute statement");
-        }
     }
 }
 

@@ -22,7 +22,7 @@ public class CompilationMapper {
                         .annotation(x.getAnnotation())
                         .category(new CategoryDtoResponse(x.getCategory().getId(), x.getCategory().getName()))
                         .confirmedRequests(x.getConfirmedRequests())
-                        .eventDate(x.getEventDate().toString())
+                        .eventDate(x.getEventDate())
                         .id(x.getId())
                         .initiator(new UserShortDto(x.getInitiator().getId(), x.getInitiator().getName()))
                         .paid(x.getPaid())

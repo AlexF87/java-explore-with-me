@@ -13,7 +13,6 @@ import ru.practicum.explore_with_me.service.compilation.CompilationService;
 import javax.validation.Valid;
 
 @Slf4j
-@Validated
 @RestController
 @RequestMapping("/admin/compilations")
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class CompilationControllerAdm {
     @PatchMapping("/{compId}")
     @ResponseStatus(HttpStatus.OK)
     public CompilationDto update(@PathVariable Long compId,
-                                 @RequestBody UpdateCompilationRequest updateCompilationRequest) {
+                                 @RequestBody @Valid UpdateCompilationRequest updateCompilationRequest) {
         log.info("PATCH /admin/compilations compId {}, {}", compId, updateCompilationRequest);
         return compilationService.updateCompilation(compId, updateCompilationRequest);
     }

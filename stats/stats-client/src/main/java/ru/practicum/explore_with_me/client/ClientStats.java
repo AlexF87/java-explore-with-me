@@ -1,6 +1,8 @@
 package ru.practicum.explore_with_me.client;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -16,10 +18,13 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class ClientStats {
-    private static final String API_PREFIX_HIT = "http://stats-server:9090/hit";
+    @Value("${stats-service-url}")
+    private String statsServer;
+    private String API_PREFIX_HIT = "hit";
 
-    private static final String API_PREFIX_STATS = "http://stats-server:9090/stats";
+    private String API_PREFIX_STATS = statsServer + "stats";
 
     private final RestTemplate restTemplate;
 
@@ -29,7 +34,8 @@ public class ClientStats {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<StatsDtoRequest> requestEntity = new HttpEntity<>(stat, headers);
-        restTemplate.exchange(API_PREFIX_HIT, HttpMethod.POST, requestEntity, StatsDtoRequest
+        log.info(String.format("%S", API_PREFIX_HIT));
+        restTemplate.exchange(statsServer + "hit", HttpMethod.POST, requestEntity, StatsDtoRequest
                 .class);
     }
 
@@ -54,7 +60,7 @@ public class ClientStats {
                 "uris", urisFull.toString(),
                 "unique", unique);
 
-        String url = API_PREFIX_STATS + "?start={start}&end={end}&uris={uris}&unique={unique}";
+        String url = statsServer + "stats" + "?start={start}&end={end}&uris={uris}&unique={unique}";
         ResponseEntity<List<StatsDtoRes>> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity,
                 new ParameterizedTypeReference<List<StatsDtoRes>>() {
                 },

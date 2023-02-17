@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.common.CustomPageRequest;
 import ru.practicum.explore_with_me.dto.compilation.CompilationDto;
 import ru.practicum.explore_with_me.dto.compilation.CompilationDtoNew;
 import ru.practicum.explore_with_me.dto.compilation.UpdateCompilationRequest;
+import ru.practicum.explore_with_me.handler.exception.BadRequestException;
 import ru.practicum.explore_with_me.handler.exception.NotFoundException;
 import ru.practicum.explore_with_me.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.model.Compilation;
@@ -22,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
@@ -29,20 +32,26 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public CompilationDto addCompilation(CompilationDtoNew compilationDtoNew) {
-        List<Event> events = eventRepository.findAllById(compilationDtoNew.getEvents());
+        List<Event> events = new ArrayList<>();
+        if(compilationDtoNew.getEvents() != null || !compilationDtoNew.getEvents().isEmpty()) {
+            events = eventRepository.findAllById(compilationDtoNew.getEvents());
+        }
         Set<Event> eventSet = new HashSet<>(events);
         Compilation compilation = compilationMapper.toCompilation(compilationDtoNew, eventSet);
         return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
 
     @Override
+    @Transactional
     public void deleteCompilation(Long compId) {
         checkCompilation(compId);
         compilationRepository.deleteById(compId);
     }
 
     @Override
+    @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest updateCompilationRequest) {
         Compilation compilation = checkCompilation(compId);
         if (updateCompilationRequest.getPinned() != null) {
@@ -52,7 +61,7 @@ public class CompilationServiceImpl implements CompilationService {
             List<Event> events = eventRepository.findAllById(updateCompilationRequest.getEvents());
             compilation.setEvents(new HashSet<>(events));
         }
-        if (updateCompilationRequest.getTitle() != null) {
+        if (updateCompilationRequest.getTitle() != null && !updateCompilationRequest.getTitle().isBlank()) {
             compilation.setTitle(updateCompilationRequest.getTitle());
         }
         compilation = compilationRepository.save(compilation);

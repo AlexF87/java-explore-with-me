@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,9 @@ import ru.practicum.explore_with_me.service.event.EventService;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.sql.SQLOutput;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -42,7 +46,6 @@ public class EventsControllerPrivate {
                                      @Valid @RequestBody NewEventDto newEventDto) {
 
         log.info("POST /users/userId/events userId={}, {}", userId, newEventDto);
-
         return eventService.addEvent(userId, newEventDto);
     }
 
