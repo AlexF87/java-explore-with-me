@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS comments
     id_event BIGINT NOT NULL,
     id_user BIGINT NOT NULL,
     CONSTRAINT pk_comments PRIMARY KEY (id_comment),
-    CONSTRAINT fk_event FOREIGN KEY (id_event) REFERENCES events (id_event),
-    CONSTRAINT fk_user FOREIGN KEY (id_user) REFERENCES users (id_user)
+    CONSTRAINT fk_event_comm FOREIGN KEY (id_event) REFERENCES events (id_event) ON DELETE CASCADE,
+    CONSTRAINT fk_user_comm FOREIGN KEY (id_user) REFERENCES users (id_user) ON DELETE CASCADE
 )
 
 

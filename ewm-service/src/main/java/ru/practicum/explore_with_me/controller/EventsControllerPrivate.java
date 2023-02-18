@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.dto.event.EventDtoResponse;
@@ -12,6 +13,7 @@ import ru.practicum.explore_with_me.dto.event.UpdateEventUserRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.explore_with_me.dto.request.ParticipationRequestDto;
+import ru.practicum.explore_with_me.handler.exception.ForbiddenExceptionCust;
 import ru.practicum.explore_with_me.service.event.EventService;
 
 import javax.validation.Valid;
@@ -39,8 +41,10 @@ public class EventsControllerPrivate {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventDtoResponse addEvent(@PathVariable Long userId,
-                                     @Valid @RequestBody NewEventDto newEventDto) {
-
+                                     @Valid @RequestBody NewEventDto newEventDto, BindingResult errors) {
+        if (errors.hasErrors()) {
+            throw new ForbiddenExceptionCust(errors.toString());
+        }
         log.info("POST /users/userId/events userId={}, {}", userId, newEventDto);
         return eventService.addEvent(userId, newEventDto);
     }

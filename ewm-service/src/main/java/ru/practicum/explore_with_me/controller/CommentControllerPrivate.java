@@ -31,13 +31,13 @@ public class CommentControllerPrivate {
         return commentService.addComment(userId, eventId, newCommentDto);
     }
 
-    @PatchMapping("/user/{userId}/event/{eventId}")
+    @PatchMapping("{commentId}/user/{userId}/")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseCommentDto updateComment(@PathVariable Long userId,
-                                            @PathVariable Long eventId,
+    public ResponseCommentDto updateComment(@PathVariable Long commentId,
+                                            @PathVariable Long userId,
                                             @RequestBody @Valid UpdateCommentDto updateCommentDto) {
-        log.info("Patch/user/{userId}/event/{eventId} userId {} eventId {} ", userId, eventId);
-        return commentService.updateComment(userId, eventId, updateCommentDto);
+        log.info("Patch/comment/{commentId}/user/{userId}/ commentId {} userId {} ", commentId, userId);
+        return commentService.updateComment(commentId, userId, updateCommentDto);
     }
 
     @GetMapping("/event/{eventId}")

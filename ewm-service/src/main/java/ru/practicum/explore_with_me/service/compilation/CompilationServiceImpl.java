@@ -63,7 +63,6 @@ public class CompilationServiceImpl implements CompilationService {
         if (updateCompilationRequest.getTitle() != null && !updateCompilationRequest.getTitle().isBlank()) {
             compilation.setTitle(updateCompilationRequest.getTitle());
         }
-        compilation = compilationRepository.save(compilation);
         return CompilationMapper.toCompilationDto(compilation);
     }
 
