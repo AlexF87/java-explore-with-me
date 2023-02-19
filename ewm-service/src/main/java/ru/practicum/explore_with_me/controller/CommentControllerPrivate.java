@@ -22,16 +22,16 @@ public class CommentControllerPrivate {
 
     private final CommentService commentService;
 
-    @PostMapping
+    @PostMapping("/user/{userId}/event/{eventId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseCommentDto addComment(@RequestParam Long userId,
-                                         @RequestParam Long eventId,
+    public ResponseCommentDto addComment(@PathVariable Long userId,
+                                         @PathVariable Long eventId,
                                          @RequestBody @Valid NewCommentDto newCommentDto) {
-        log.info("POST /comment userId {}, eventId {], {} ", userId, eventId, newCommentDto);
+        log.info("POST /comment userId {}, eventId {}, {} ", userId, eventId, newCommentDto);
         return commentService.addComment(userId, eventId, newCommentDto);
     }
 
-    @PatchMapping("{commentId}/user/{userId}/")
+    @PatchMapping("{commentId}/user/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseCommentDto updateComment(@PathVariable Long commentId,
                                             @PathVariable Long userId,

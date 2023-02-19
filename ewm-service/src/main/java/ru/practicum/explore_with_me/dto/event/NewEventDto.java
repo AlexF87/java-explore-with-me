@@ -2,7 +2,6 @@ package ru.practicum.explore_with_me.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
-import ru.practicum.explore_with_me.handler.exception.ForbiddenExceptionCust;
 
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -22,7 +21,7 @@ public class NewEventDto {
     @Size(min = 20, max = 7000)
     private String description;
     @NotNull
-    @Future(groups = ForbiddenExceptionCust.class)
+    @Future
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
     @NotNull

@@ -244,6 +244,7 @@ public class EventServiceImpl implements EventService {
         long x = event.getParticipantLimit() - event.getConfirmedRequests();
         return x > 0 ? true : false;
     }
+
     @Override
     public Event checkEvent(Long id) {
         return eventRepository.findById(id).orElseThrow(

@@ -13,7 +13,10 @@ public interface CommentService {
     ResponseCommentDto updateComment(Long commentId, Long userId, UpdateCommentDto updateCommentDto);
 
     List<ResponseCommentDto> getAllCommentEvent(Long eventId);
+
     ResponseCommentDto getComment(Long commentId, Long userId);
+
     void deleteComment(Long commentId, Long userId);
+
     void deleteCommentAdmin(Long commentId);
 }

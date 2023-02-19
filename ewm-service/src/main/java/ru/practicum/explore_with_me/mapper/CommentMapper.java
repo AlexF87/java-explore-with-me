@@ -21,7 +21,7 @@ public class CommentMapper {
         return comment;
     }
 
-    public static ResponseCommentDto toResponseCommentDto (Comment comment) {
+    public static ResponseCommentDto toResponseCommentDto(Comment comment) {
         ResponseCommentDto responseCommentDto = new ResponseCommentDto();
         responseCommentDto.setCreated(comment.getCreated());
         responseCommentDto.setText(comment.getText());

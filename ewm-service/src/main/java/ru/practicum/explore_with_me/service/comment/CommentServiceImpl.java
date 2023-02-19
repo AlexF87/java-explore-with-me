@@ -35,11 +35,11 @@ public class CommentServiceImpl implements CommentService {
     public ResponseCommentDto addComment(Long userId, Long eventId, NewCommentDto newCommentDto) {
         Event event = eventService.checkEvent(eventId);
         if (event.getState() != EventState.PUBLISHED) {
-            throw new ForbiddenExceptionCust("you can leave a comment only on published events")ж
+            throw new ForbiddenExceptionCust("you can leave a comment only on published events");
         }
         User user = userService.checkUser(userId);
         Comment comment = commentMapper.toComment(newCommentDto, user, event);
-        return CommentMapper.toResponseCommentDto(comment);
+        return CommentMapper.toResponseCommentDto(commentRepository.save(comment));
     }
 
     @Override
@@ -51,7 +51,7 @@ public class CommentServiceImpl implements CommentService {
         }
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new
                 NotFoundException(String.format("Comment with id=%d was not found", commentId)));
-        if (updateCommentDto.getText() != null && updateCommentDto.getText().isEmpty()) {
+        if (updateCommentDto.getText() != null && !updateCommentDto.getText().isBlank()) {
             comment.setText(updateCommentDto.getText());
         }
         return CommentMapper.toResponseCommentDto(comment);
@@ -91,6 +91,8 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteCommentAdmin(Long commentId) {
+        commentRepository.findById(commentId).orElseThrow(() ->
+                new NotFoundException(String.format("Comment with id=%d was not found", commentId)));
         commentRepository.deleteById(commentId);
     }
 }

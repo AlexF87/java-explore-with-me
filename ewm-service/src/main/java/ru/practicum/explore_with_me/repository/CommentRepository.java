@@ -6,6 +6,7 @@ import ru.practicum.explore_with_me.model.Comment;
 import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-List<Comment>findAllByEventId(Long eventId);
-Comment findByIdAndAndUserId(Long commentId, Long userId);
+    List<Comment> findAllByEventId(Long eventId);
+
+    Comment findByIdAndAndUserId(Long commentId, Long userId);
 }
