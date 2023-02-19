@@ -11,7 +11,6 @@ import javax.persistence.*;
 @RequiredArgsConstructor
 @Entity
 @Table(name = "apps")
-
 public class App {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
