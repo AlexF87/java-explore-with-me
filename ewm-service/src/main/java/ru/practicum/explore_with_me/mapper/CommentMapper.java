@@ -28,6 +28,8 @@ public class CommentMapper {
         responseCommentDto.setUserId(comment.getUser().getId());
         responseCommentDto.setEventId(comment.getEvent().getId());
         responseCommentDto.setId(comment.getId());
+        responseCommentDto.setEditedOn(comment.getEditedOn() == null ? null : comment.getEditedOn());
+        responseCommentDto.setEdited(comment.isEdited());
         return responseCommentDto;
     }
 }

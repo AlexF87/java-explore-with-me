@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS comments
     created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     id_event BIGINT NOT NULL,
     id_user BIGINT NOT NULL,
+    edited_on TIMESTAMP WITHOUT TIME ZONE,
+    is_edited BOOLEAN NOT NULL,
     CONSTRAINT pk_comments PRIMARY KEY (id_comment),
     CONSTRAINT fk_event_comm FOREIGN KEY (id_event) REFERENCES events (id_event) ON DELETE CASCADE,
     CONSTRAINT fk_user_comm FOREIGN KEY (id_user) REFERENCES users (id_user) ON DELETE CASCADE

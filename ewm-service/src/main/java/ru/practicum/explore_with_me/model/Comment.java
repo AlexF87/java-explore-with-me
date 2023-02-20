@@ -28,6 +28,10 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name = "id_user")
     private User user;
+    @Column(name = "edited_on")
+    private LocalDateTime editedOn;
+    @Column(name = "is_edited")
+    private boolean isEdited;
 
     @Override
     public boolean equals(Object o) {
@@ -35,15 +39,17 @@ public class Comment {
         if (o == null) return false;
         if (!(o instanceof Comment)) return false;
         Comment comment = (Comment) o;
-        return Objects.equals(getId(), comment.getId())
+        return isEdited() == comment.isEdited()
+                && Objects.equals(getId(), comment.getId())
                 && Objects.equals(getText(), comment.getText())
                 && Objects.equals(getCreated(), comment.getCreated())
                 && Objects.equals(getEvent(), comment.getEvent())
-                && Objects.equals(getUser(), comment.getUser());
+                && Objects.equals(getUser(), comment.getUser())
+                && Objects.equals(getEditedOn(), comment.getEditedOn());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getText(), getCreated(), getEvent(), getUser());
+        return Objects.hash(getId(), getText(), getCreated(), getEvent(), getUser(), getEditedOn(), isEdited());
     }
 }

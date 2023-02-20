@@ -15,4 +15,6 @@ public class ResponseCommentDto {
     private LocalDateTime created;
     private Long eventId;
     private Long userId;
+    private LocalDateTime editedOn;
+    private boolean isEdited;
 }

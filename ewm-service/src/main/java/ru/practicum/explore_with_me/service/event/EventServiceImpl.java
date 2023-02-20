@@ -95,7 +95,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventDtoResponse updateEventAdmin(Long id, UpdateEventAdminRequest updateEventAdminRequest) {
-        Event event = checkEvent(id);
+        Event event = getEventOrThrow(id);
         checkActionState(event, updateEventAdminRequest);
         checkDate(event, updateEventAdminRequest);
         event = updateEventAdm(event, updateEventAdminRequest);
@@ -132,7 +132,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDtoResponse getEvent(Long id, HttpServletRequest request) {
         updateStat(request);
-        Event event = checkEvent(id);
+        Event event = getEventOrThrow(id);
         if (event.getState() != EventState.PUBLISHED) {
             throw new BadRequestException("Event must be published");
         }
@@ -175,7 +175,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDtoResponse updateEventUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         User user = userService.checkUser(userId);
-        Event event = checkEvent(eventId);
+        Event event = getEventOrThrow(eventId);
         Category category = null;
         if (updateEventUserRequest.getCategory() != null) {
             category = categoryService.checkCategory(updateEventUserRequest.getCategory());
@@ -202,7 +202,7 @@ public class EventServiceImpl implements EventService {
     public List<ParticipationRequestDto> getRequestsEvent(Long userId, Long eventId) {
         List<ParticipationRequestDto> result = new ArrayList<>();
         userService.checkUser(userId);
-        checkEvent(eventId);
+        getEventOrThrow(eventId);
         result = requestService.findRequestEvent(eventId);
         return result;
     }
@@ -212,7 +212,7 @@ public class EventServiceImpl implements EventService {
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest eventRequest) {
         User user = userService.checkUser(userId);
-        Event event = checkEvent(eventId);
+        Event event = getEventOrThrow(eventId);
         writeConfirmedRequests(List.of(event));
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
@@ -246,7 +246,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event checkEvent(Long id) {
+    public Event getEventOrThrow(Long id) {
         return eventRepository.findById(id).orElseThrow(
                 () -> new NotFoundException(String.format("Not found event, id: %d ", id)));
     }

@@ -17,7 +17,7 @@ import ru.practicum.explore_with_me.repository.CommentRepository;
 import ru.practicum.explore_with_me.service.event.EventService;
 import ru.practicum.explore_with_me.service.user.UserService;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +33,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public ResponseCommentDto addComment(Long userId, Long eventId, NewCommentDto newCommentDto) {
-        Event event = eventService.checkEvent(eventId);
+        Event event = eventService.getEventOrThrow(eventId);
         if (event.getState() != EventState.PUBLISHED) {
             throw new ForbiddenExceptionCust("you can leave a comment only on published events");
         }
@@ -53,26 +53,27 @@ public class CommentServiceImpl implements CommentService {
                 NotFoundException(String.format("Comment with id=%d was not found", commentId)));
         if (updateCommentDto.getText() != null && !updateCommentDto.getText().isBlank()) {
             comment.setText(updateCommentDto.getText());
+            comment.setEditedOn(LocalDateTime.now());
+            comment.setEdited(true);
         }
         return CommentMapper.toResponseCommentDto(comment);
     }
 
     @Override
     public List<ResponseCommentDto> getAllCommentEvent(Long eventId) {
-        eventService.checkEvent(eventId);
+        eventService.getEventOrThrow(eventId);
         List<Comment> comments = commentRepository.findAllByEventId(eventId);
-        List<ResponseCommentDto> result = new ArrayList<>();
-        result = comments.stream().map(CommentMapper::toResponseCommentDto).collect(Collectors.toList());
+        List<ResponseCommentDto> result = comments.stream()
+                .map(CommentMapper::toResponseCommentDto)
+                .collect(Collectors.toList());
         return result;
     }
 
     @Override
     public ResponseCommentDto getComment(Long commentId, Long userId) {
         userService.checkUser(userId);
-        Comment comment = commentRepository.findByIdAndAndUserId(commentId, userId);
-        if (comment == null) {
-            throw new NotFoundException(String.format("Comment with id=%d was not found", commentId));
-        }
+        Comment comment = commentRepository.findByIdAndUserId(commentId, userId).orElseThrow(() ->
+                new NotFoundException(String.format("Comment with id=%d was not found", commentId)));
         return CommentMapper.toResponseCommentDto(comment);
     }
 
