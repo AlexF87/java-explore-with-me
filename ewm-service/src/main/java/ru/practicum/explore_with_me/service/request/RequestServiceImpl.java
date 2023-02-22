@@ -55,32 +55,30 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public ParticipationRequestDto addRequest(Long userId, Long eventId) {
         User user = userService.checkUser(userId);
-        Optional<Event> event = eventRepository.findById(eventId);
-        event.get().setConfirmedRequests(getConfirmedRequest(eventId));
-        if (event.isEmpty()) {
-            throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
-        }
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(String.format("Event with id=%d was not found", eventId)));
+        event.setConfirmedRequests(getConfirmedRequest(eventId));
         checkRepeatRequest(eventId, userId);
-        if (userId.equals(event.get().getInitiator().getId())) {
+        if (userId.equals(event.getInitiator().getId())) {
             throw new ForbiddenExceptionCust("The initiator adds the request to its event.");
         }
-        if (event.get().getState() != EventState.PUBLISHED) {
+        if (event.getState() != EventState.PUBLISHED) {
             throw new ForbiddenExceptionCust("Event not published");
         }
-        long limitRequest = event.get().getParticipantLimit() - event.get().getConfirmedRequests();
+        long limitRequest = event.getParticipantLimit() - event.getConfirmedRequests();
         if (limitRequest == 0) {
             throw new ForbiddenExceptionCust("The limit of participation requests has been reached");
         }
         Request newRequest = new Request();
-        if (!event.get().getRequestModeration()) {
+        if (!event.getRequestModeration()) {
             newRequest.setStatus(RequestState.CONFIRMED);
-            eventRepository.save(event.get());
+            eventRepository.save(event);
         } else {
             newRequest.setStatus(RequestState.PENDING);
         }
         newRequest.setRequester(user);
         newRequest.setCreated(LocalDateTime.now().withNano(WITH_NANO_ZERO));
-        newRequest.setEvent(event.get());
+        newRequest.setEvent(event);
 
         return RequestMapper.toParticipationRequestDto(requestRepository.save(newRequest));
     }
@@ -129,8 +127,8 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private Request checkRequest(Long requestId, Long userId) {
-        Optional<Request> request = requestRepository.findByIdAndRequesterId(requestId, userId);
-        request.orElseThrow(() -> new NotFoundException(String.format("Request with id=%d was not found", requestId)));
-        return request.get();
+        Request request = requestRepository.findByIdAndRequesterId(requestId, userId).orElseThrow(() ->
+                new NotFoundException(String.format("Request with id=%d was not found", requestId)));
+        return request;
     }
 }
